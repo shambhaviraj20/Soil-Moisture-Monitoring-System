@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soil Moisture System</title>
+    <style>
+        /* Global styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #070F2B;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            padding: 20px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Styles for the navbar */
+        .navbar {
+            width: 100%;
+            height: 50px;
+            background-color: #9195F6;
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            color: black;
+            margin-top: 12px;
+        }
+
+        .navbar h1 {
+            font-size: 28px;
+            /* text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); */
+        }
+
+        /* Styles for the main window */
+        .main-window {
+            width: 90%;
+            height: auto;
+            text-align: center;
+            background-color: #9290C3;
+            color: black;
+            border-radius: 20px;
+            margin-top: 25px;
+        }
+
+        /* Styles for the start/stop button */
+        .start-stop-button {
+            background-color: green;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .start-stop-button.green {
+            background-color: red;
+        }
+
+        /* Styles for the if-start and if-stop sections */
+        .if-start {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .if-start h1 {
+            font-size: 24px;
+        }
+
+        .if-stop {
+            margin-top: 20px;
+        }
+
+        .team-window {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            bottom: 50px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: 60%;
+            background-color: #9290C3;
+            color: black;
+            padding: 10px;
+            border-radius: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            /* background-color: rgb(145, 255, 0); */
+            background-color: #9195F6;
+            color: black;
+        }
+
+        .soil-property {
+            width: fit-content;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #9195F6;
+            border-radius: 20px;
+            margin: 40px;
+            color: #070F2B;
+            padding-left: 25px;
+            padding-right: 25px;
+        }
+
+        .soil-property.hidden {
+            display: none;
+        }
+
+        .soil-property h1 {
+            font-size: 25px;
+        }
+
+        .image-container {
+            margin-top: 10px;
+            width: 100%;
+            max-width: 500px;
+            height: 200px;
+            background-image: url("https://i.ibb.co/Yd07shn/VIIT-logo.png");
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 20px;
+            /* border: #9195F6 1px solid; */
+            border-top: #9195F6 1px solid;
+            border-bottom: #9195F6 1px solid;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="image-container"></div>
+    <div class="navbar">
+        <h1>Soil Moisture Monitoring System</h1>
+    </div>
+    <div class="main-window">
+        <div class="if-stop">
+            <h3>The Sensor is currently Stopped!</h3>
+        </div>
+        <div class="if-start">
+            <h1>Current Soil Moisture: <span id="moistureValue">
+                    <%= moistureValue %>
+                </span></h1>
+            <h3 id="countdown">Refreshing in 5 seconds...</h3>
+        </div>
+        <button id="startStopButton" class="start-stop-button">Start</button>
+    </div>
+    <div class="soil-property hidden">
+        <h1 id="soilStatus"></h1>
+    </div>
+    <div class="team-window">
+        <table>
+            <tr>
+                <th>No</th>
+                <th>Name</th>
+                <th>PRN</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Shambhavi Raj</td>
+                <td>22311465</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Arya Kuwar</td>
+                <td>22311452</td>
+            </tr>
+            
+            <tr>
+                <td>3</td>
+                <td>Parth Shinde</td>
+                <td>22310721</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        const startStopButton = document.getElementById('startStopButton');
+        const startSection = document.querySelector('.if-start');
+        const stopSection = document.querySelector('.if-stop');
+        const moistureValue = document.getElementById('moistureValue');
+        const countdown = document.getElementById('countdown');
+        const soilStatus = document.getElementById('soilStatus');
+
+        let isStarted = false;
+        let refreshInterval;
+
+        const updateButtonState = () => {
+            startStopButton.classList.toggle('green', isStarted);
+            startStopButton.textContent = isStarted ? 'Stop' : 'Start';
+        };
+
+        const toggleSectionsVisibility = () => {
+            startSection.style.display = isStarted ? 'block' : 'none';
+            stopSection.style.display = isStarted ? 'none' : 'block';
+        };
+
+        const fetchMoistureValue = () => {
+            fetch('/get')
+                .then(response => response.text())
+                .then(data => {
+                    moistureValue.textContent = data;
+
+                    if (data > 3500) {
+                        soilStatus.textContent = 'Soil is Dry. Water your plants! 💦';
+                    } else if (data > 1200) {
+                        soilStatus.textContent = 'Soil is Somewhat Wet 🌱';
+                    } else {
+                        soilStatus.textContent = 'Soil is Wet ☔';
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        };
+
+
+
+
+
+        const startStopButtonClickHandler = () => {
+            isStarted = !isStarted;
+            updateButtonState();
+            toggleSectionsVisibility();
+
+            if (isStarted) {
+                startRefreshInterval();
+                fetchMoistureValue();
+                showSoilProperty();
+            } else {
+                stopRefreshInterval();
+                hideSoilProperty();
+            }
+        };
+
+        const startRefreshInterval = () => {
+            refreshInterval = setInterval(() => {
+                fetchMoistureValue();
+                startCountdown();
+            }, 5000);
+        };
+
+        const stopRefreshInterval = () => {
+            clearInterval(refreshInterval);
+            countdown.textContent = '';
+        };
+
+        const startCountdown = () => {
+            let count = 5;
+            countdown.textContent = `Refreshing in ${count} seconds...`;
+
+            const countdownInterval = setInterval(() => {
+                count--;
+                countdown.textContent = `Refreshing in ${count} seconds...`;
+
+                if (count <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        };
+
+        const showSoilProperty = () => {
+            const soilProperty = document.querySelector('.soil-property');
+            soilProperty.classList.remove('hidden');
+        };
+
+        const hideSoilProperty = () => {
+            const soilProperty = document.querySelector('.soil-property');
+            soilProperty.classList.add('hidden');
+        };
+
+        startStopButton.addEventListener('click', startStopButtonClickHandler);
+        fetchMoistureValue();
+    </script>
+</body>
+
+</html>
